@@ -1,0 +1,9 @@
+div(style="font-family:Arial;margin: 10px;padding:10px")
+    div(style="width:400px;margin-left:auto;margin-right:auto")
+      h1 ClinWiki Search Results
+    div(style="width:80%;margin-left:auto;margin-right:auto")      
+      each search in results
+        p Number of new studies found: #{search.hits.length}
+        ul
+        each study in search.hits
+            li <a style="color:#0099ff;padding:10px;font-weight:bold;" href="#{webUrl}/study/#{study._id}">#{study._source.brief_title}</a>
