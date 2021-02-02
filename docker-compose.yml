@@ -1,0 +1,14 @@
+version: "3"
+services:
+  clinwiki:
+    image: keymetrics/pm2:14-alpine
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: npm start
+    container_name: clinwiki-notify
+    volumes:
+      - .:/clinwiki-notify
+
+volumes:
+  node_modules:
