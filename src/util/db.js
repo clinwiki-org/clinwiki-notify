@@ -1,11 +1,12 @@
 import {Pool} from 'pg';
 import config from '../../config';
-
-const connectionString = config.postgresUrl;
     
-const pool = new Pool({ connectionString });
+let pool = undefined;
 
 export const query = async (str,params) => {
+    if(!pool) {
+        pool = new Pool({ connectionString: config.postgresUrl });
+    }
     const res = await pool.query(str,params);
     return res;
 }

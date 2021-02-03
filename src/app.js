@@ -3,7 +3,7 @@ import * as db from './util/db';
 import * as elastic from './util/elastic';
 import logger from './util/logger';
 import translate from './translator';
-import config from '../config';
+import config,{loadConfig} from '../config';
 import * as broadcast from './broadcaster';
 const util = require('util')
 
