@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: npm start
+    command: npm run start_babel
     container_name: clinwiki-notify
     volumes:
       - .:/clinwiki-notify
