@@ -5,4 +5,4 @@ COPY . .
 RUN npm install
 RUN pm2 install pm2-logrotate
 #CMD [ "pm2-runtime", "start", "ecosystem.config.js" ]
-CMD ["npm", "start"]
+#CMD ["npm", "start"]
