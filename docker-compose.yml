@@ -4,8 +4,6 @@ services:
     image: keymetrics/pm2:14-alpine
     container_name: clinwiki-notify
     volumes:
-      - .:/clinwiki-notify
-    volumes:
       - type: bind
         source: ./
         target: /clinwiki-notify
