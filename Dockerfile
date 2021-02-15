@@ -1,14 +1,32 @@
-FROM keymetrics/pm2:14-alpine
-RUN mkdir -p /clinwiki-notify
+FROM node:14.15.5-alpine AS base
+
 WORKDIR /clinwiki-notify
-COPY . .
-#RUN npm install -g nodemon
-#RUN npm install -g @babel/core
-#RUN npm install -g @babel/node
-#RUN npm install -g @babel/preset-env
-#RUN npm install
+
+# ---------- Builder ----------
+# Creates:
+# - node_modules: production dependencies (no dev dependencies)
+# - dist: A production build compiled with Babel
+FROM base AS builder
+
+COPY package*.json .babelrc.json ./
+
 RUN npm install
+
+COPY ./src ./src
+
 RUN npm run build
-#RUN pm2 install pm2-logrotate
-#CMD [ "pm2-runtime", "start", "ecosystem.config.js" ]
+
+# ---------- Release ----------
+FROM base AS release
+
+COPY --from=builder /clinwiki-notify/node_modules ./node_modules
+COPY --from=builder /clinwiki-notify/dist ./dist
+
+CMD ["node", "./dist/server.js"]
+
+#RUN mkdir -p /clinwiki-notify
+#WORKDIR /clinwiki-notify
+#COPY . .
+#RUN npm install
+#RUN npm run build
 #CMD ["npm", "start"]

@@ -2,13 +2,19 @@ version: "3"
 services:
   clinwiki:
     image: keymetrics/pm2:14-alpine
-    build:
-      context: .
-      dockerfile: Dockerfile
-    command: npm run start_babel
     container_name: clinwiki-notify
     volumes:
       - .:/clinwiki-notify
-
+    volumes:
+      - type: bind
+        source: ./
+        target: /clinwiki-notify
+      - type: volume
+        source: node_modules # name of the volume, see below
+        target: /clinwiki-notify/node_modules
+        volume:
+          nocopy: true
+    working_dir: /clinwiki-notify
+    command: npm run dev
 volumes:
   node_modules:
