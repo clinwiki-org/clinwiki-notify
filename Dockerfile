@@ -4,6 +4,7 @@ WORKDIR /clinwiki-notify
 COPY . .
 #RUN npm install -g nodemon
 RUN npm install -g @babel/node
+RUN npm install -g @babel/core
 #RUN npm install
 RUN npm install
 RUN npm run build
