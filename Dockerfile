@@ -3,7 +3,7 @@ RUN mkdir -p /clinwiki-notify
 WORKDIR /clinwiki-notify
 COPY . .
 #RUN npm install -g nodemon
-#RUN npm install -g @babel/cli
+RUN npm install -g @babel/node
 #RUN npm install
 RUN npm install
 RUN npm run build
