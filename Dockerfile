@@ -3,6 +3,7 @@ RUN mkdir -p /clinwiki-notify
 WORKDIR /clinwiki-notify
 COPY . .
 RUN npm install -g nodemon
+RUN npm install -g @babel/cli
 RUN npm install
 RUN pm2 install pm2-logrotate
 #CMD [ "pm2-runtime", "start", "ecosystem.config.js" ]
