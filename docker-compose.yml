@@ -8,11 +8,11 @@ services:
         source: ./
         target: /clinwiki-notify
       - type: volume
-        source: node_modules # name of the volume, see below
+        source: nodemodules # name of the volume, see below
         target: /clinwiki-notify/node_modules
         volume:
           nocopy: true
     working_dir: /clinwiki-notify
     command: npm run dev
 volumes:
-  node_modules:
+  nodemodules:
