@@ -3,6 +3,7 @@ services:
   clinwiki:
     image: keymetrics/pm2:14-alpine
     container_name: clinwiki-notify
+    network_mode: host
     volumes:
       - type: bind
         source: ./
