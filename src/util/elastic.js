@@ -3,13 +3,11 @@ import superagent from 'superagent';
 import config from '../../config';
 const util = require('util')
 
-const INDEX = 'studies_development';
-
 export const query = async (body) => {
     try {
         const connection = getConnection();
         const payload = {
-            index: INDEX,
+            index: config.elasticIndex,
             body
         };
         //console.log(util.inspect(payload, false, null, true /* enable colors */))
@@ -41,7 +39,7 @@ export const newQuery = async (body) => {
         let encode = Buffer.from(config.elasticsearchUsername+':'+config.elasticsearchPassword)
             .toString('base64');
         console.log(encode)
-        return await superagent.post(config.elasticsearchHost+'/'+INDEX+'/_search')
+        return await superagent.post(config.elasticsearchHost+'/'+config.elasticIndex+'/_search')
             .set('Authorization','Basic '+ encode)
             .send(body).then(response => response.body);
     }
