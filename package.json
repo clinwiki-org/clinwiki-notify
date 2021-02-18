@@ -23,12 +23,13 @@
   },
   "homepage": "https://github.com/clinwiki-org/clinwiki-notify#readme",
   "devDependencies": {
-    "@babel/node": "^7.10.3",
-    "@babel/core": "^7.10.3",
-    "@babel/register": "^7.10.3",
     "@babel/cli": "^7.10.3",
-    "babel-eslint": "^10.1.0",
+    "@babel/core": "^7.10.3",
+    "@babel/node": "^7.10.3",
     "@babel/preset-env": "^7.10.3",
+    "@babel/register": "^7.10.3",
+    "arkit": "^1.6.4",
+    "babel-eslint": "^10.1.0",
     "eslint": "^5.16.0",
     "nodemon": "^2.0.4"
   },
