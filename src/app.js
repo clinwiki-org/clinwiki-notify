@@ -36,6 +36,7 @@ export const app = () => {
                     const criteria = criteriaResults.rows[0].long;
                     logger.info('Translating search criteria '+criteria);
                     const translated = await translate(criteria,user.search_last_notification);
+                    logger.info('---Translated search criteria to '+translated);
                     let esResults = await elastic.query(translated);
                     const results =  esResults.body.hits;
                     logger.info('Found '+results.length+' matches for search '+savedSearch.id);
