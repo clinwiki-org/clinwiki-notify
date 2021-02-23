@@ -7,7 +7,6 @@ import config from '../config';
 
 export function mailResults(email,results) {
     try {
-        console.log('RESULTS',results.length)
         if(results.length === 0) {
             return;
         }

@@ -34,15 +34,15 @@ export const app = () => {
                     logger.info('Running search for saved search '+savedSearch.id);
                     const criteriaResults = await db.query(HASH_QUERY,[savedSearch.short_link_id]);    
                     const criteria = criteriaResults.rows[0].long;
-                    logger.info('Translating search criteria '+criteria);
+                    logger.info('Translating search criteria '+util.inspect(criteria,false,null,true));
                     const translated = await translate(criteria,user.search_last_notification);
-                    logger.info('---Translated search criteria to '+translated);
+                    logger.info('Translated search criteria to '+util.inspect(translated, false, null, true ));
                     let esResults = await elastic.query(translated);
                     const results =  esResults.body.hits;
                     logger.info('Found '+results.length+' matches for search '+savedSearch.id);
 
                     if(results.length !== 0) {
-                        searchResults.push(results);
+                        searchResults.push({results,name:savedSearch.name_label});
                     }
                 }
                 if(searchResults.length > 0) {
