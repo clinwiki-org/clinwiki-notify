@@ -7,6 +7,7 @@ export const loadConfig = () => {
     config.elasticsearchUsername= process.env.ELASTICSEARCH_USERNAME || 'changeme';
     config.elasticsearchPassword= process.env.ELASTICSEARCH_PASSWORD || 'changeme';
     config.elasticIndex = process.env.ELASTICSEARCH_INDEX || 'studies_development';
+    config.elasticMaxResults = process.env.ELASTICSEARCH_MAX_RESULTS || 15;
     config.cronTab= process.env.CRONTAB || '*/1 * * * *';
     config.smtpHost= process.env.SMTP_HOST || 'changeme';
     config.smtpPort= process.env.SMTP_PORT || 'changeme';

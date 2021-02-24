@@ -1,4 +1,5 @@
 import logger from './util/logger';
+import config from '../config';
 
 const esb = require('elastic-builder');
 
@@ -26,7 +27,7 @@ const translate = async (json,lastDate) => {
         const dateString = lastDate.getMonth()+'/'+lastDate.getDate()+'/'+lastDate.getFullYear();
         boolQuery.must(esb.simpleQueryStringQuery('indexed_at:{'+dateString+' TO *}'));
     }
-    let requestBody = esb.requestBodySearch().query( boolQuery );
+    let requestBody = esb.requestBodySearch().query( boolQuery ).from(0).size(config.elasticMaxResults);
 
     return requestBody.toJSON();
 }

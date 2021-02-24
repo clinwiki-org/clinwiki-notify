@@ -39,7 +39,8 @@ export const app = () => {
                     logger.info('Translated search criteria to '+util.inspect(translated, false, null, true ));
                     let esResults = await elastic.query(translated);
                     const results =  esResults.body.hits;
-                    logger.info('Found '+results.length+' matches for search '+savedSearch.id);
+                    logger.info('Found '+results.total+' matches for search '
+                        +savedSearch.name_label+( '('+savedSearch.id+')'));
 
                     if(results.length !== 0) {
                         searchResults.push({results,name:savedSearch.name_label});
