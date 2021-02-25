@@ -11,7 +11,7 @@ export function mailResults(email,results) {
             return;
         }
         let templateFunction = pug.compileFile(path.join(__dirname, './views/savedSearchEmail.pug'));
-        let body = templateFunction({results,weburl: config.webUrl});
+        let body = templateFunction({results});
         sendEmail(
           email,
           'Clinwiki Search Results',

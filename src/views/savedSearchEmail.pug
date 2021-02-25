@@ -1,9 +1,9 @@
 div(style="font-family:Arial;margin: 10px;padding:10px")
     div(style="width:400px;margin-left:auto;margin-right:auto")
-      h1 ClinWiki Search Results
-    div(style="width:80%;margin-left:auto;margin-right:auto")      
+      h1 Study Search Results
+    div(style="width:80%;margin-left:auto;margin-right:auto")    
+    if  results.length != 0 
       each search in results
-        p #{search.name} found #{search.results.hits.length} new studies
-        ul
-        each study in search.results.hits
-            li <a style="color:#0099ff;padding:10px;font-weight:bold;" href="#{webUrl}/study/#{study._id}">#{study._source.brief_title}</a>
+        p <a style="color:#0099ff;padding:10px;font-weight:bold;" href="#{search.savedSearch.url}">#{search.savedSearch.name_label}</a>  found #{search.total} new or updated studies
+    else
+      p No new or updated studies found.
