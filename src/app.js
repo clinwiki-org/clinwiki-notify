@@ -13,7 +13,7 @@ const USER_QUERY = 'SELECT ID,EMAIL,SEARCH_LAST_NOTIFICATION,SEARCH_NOTIFICATION
 const SAVED_SEARCHES_QUERY = 'SELECT * FROM SAVED_SEARCHES WHERE USER_ID=$1';
 const HASH_QUERY = 'SELECT LONG FROM SHORT_LINKS WHERE ID=$1';
 
-const DEFAULT_NOTIFCATION_INTERVAL_DAYS = '1';
+const DEFAULT_NOTIFCATION_INTERVAL_DAYS = '7';
 
 export const app = () => {
     let job = schedule.scheduleJob(config.cronTab, async () => {
@@ -41,7 +41,7 @@ export const app = () => {
                     logger.info('Translating search criteria '+util.inspect(criteria,false,null,true));
                     const translated = await translate(criteria,user.search_last_notification);
                     logger.info('Translated search criteria to '+util.inspect(translated, false, null, true ));
-                    
+
                     let esResults = await elastic.query(translated);
                     const results =  esResults.body.hits;
                     logger.info('Found '+results.total+' matches for search '
@@ -62,10 +62,8 @@ export const app = () => {
 
 const allowedToNotify = (user) => {
 
-    // Disabling this for now.
 
     // Check to see if a long enough time has passed since last notification
-    /*
     if(!user.search_last_notification) {
         return true;
     }
@@ -78,7 +76,5 @@ const allowedToNotify = (user) => {
         return true;
     }
     return false;
-    */
-   return true;
 };
 
