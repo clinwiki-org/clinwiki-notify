@@ -4,13 +4,13 @@
   "description": "Notification App for Subscribed Searches, other",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon -r notenv/config ./index.js --exec babel-node",
-    "build": "babel . -d dist --ignore spec.js,node_modules",
+    "start": "nodemon ./src/index.js --exec babel-node",
+    "build": "babel ./src -d dist --ignore spec.js,node_modules",
     "serve": "node dist/index.js",
     "server": "babel-node --preset=@babel/preset-env ./dist/index.js ",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint .",
-    "dev": "nodemon --exec babel-node ./index.js"
+    "dev": "nodemon --exec babel-node ./src/index.js"
   },
   "repository": {
     "type": "git",
