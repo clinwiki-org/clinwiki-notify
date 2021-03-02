@@ -1,7 +1,7 @@
-import {app} from './src/app';
-import logger from './src/util/logger';
+import {app} from './app';
+import logger from './util/logger';
 import dotenv from 'dotenv';
-import {loadConfig} from './config';
+import {loadConfig} from '../config';
 
                             
 logger.info(" _____ _ _     _ _ _ _ _   _ ");
