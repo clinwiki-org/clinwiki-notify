@@ -11,8 +11,6 @@ const USER_QUERY = 'SELECT ID,EMAIL,SEARCH_LAST_NOTIFICATION,SEARCH_NOTIFICATION
 const SAVED_SEARCHES_QUERY = 'SELECT * FROM SAVED_SEARCHES WHERE USER_ID=$1 AND IS_SUBSCRIBED=true';
 const HASH_QUERY = 'SELECT LONG FROM SHORT_LINKS WHERE ID=$1';
 
-const DEFAULT_NOTIFCATION_INTERVAL_DAYS = '7';
-
 export const app = () => {
     let job = schedule.scheduleJob(config.cronTab, async () => {
         logger.info('Starting Job');
@@ -60,13 +58,13 @@ export const app = () => {
 
 const allowedToNotify = (user) => {
 
-
+    logger.debug(user.email + ' search_last_notification: '+user.search_last_notification);
     // Check to see if a long enough time has passed since last notification
     if(!user.search_last_notification) {
         return true;
     }
     const interval = user.search_notification_frequency ? 
-        user.search_notification_frequency : DEFAULT_NOTIFCATION_INTERVAL_DAYS;
+        user.search_notification_frequency : config.defaultNotifyIntervalInDays;
     let targetDate = new Date(user.search_last_notification);
     targetDate.setDate( targetDate.getDate() + interval);
     let now = new Date();

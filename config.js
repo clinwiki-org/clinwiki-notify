@@ -14,7 +14,8 @@ export const loadConfig = () => {
     config.smtpUser= process.env.SMTP_USER || 'changeme';
     config.smtpPassword= process.env.SMTP_PASSWORD || 'changeme';
     config.outboundEmail= process.env.SMTP_OUTBOUND_EMAIL || 'no-reply@yourdomain.com';
-    config.webUrl= process.env.WEB_URL || 'http://localhost:3001';    
+    config.webUrl= process.env.WEB_URL || 'http://localhost:3001';  
+    config.defaultNotifyIntervalInDays = process.env.DEFAULT_NOTIFCATION_INTERVAL_DAYS  || 7;
 }
 
 export default config;
