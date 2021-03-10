@@ -1,13 +1,13 @@
 import logger from './util/logger';
 import config from '../config';
-
+const util = require('util');
 const esb = require('elastic-builder');
+const NodeGeocoder = require('node-geocoder');
 
 const translate = async (json,lastDate) => {
     const criteria = await JSON.parse(json);
 
     let boolQuery = esb.boolQuery();
-
     
     translateAggFilters(criteria.agg_filters,boolQuery);
     translateAggFilters(criteria.crowd_agg_filters,boolQuery);
@@ -45,7 +45,7 @@ const translateFilterTerm = (agg) => {
         // This is a range term
         return translateRangeTerm(agg);
     }
-    if(agg.lat || agg.long || agg.radius) {
+    if(agg.lat || agg.long || agg.radius || agg.zipcode) {
         return translateGeoLoc(agg);
     }
     return translateValueTerms(agg);
@@ -69,12 +69,31 @@ const translateValueTerms = (agg) => {
     return esb.boolQuery().should(list);
 }
 
-const translateGeoLoc = (agg) => {
-    logger.debug('translateGeoLoc '+agg);
-    let query = esb.getDistanceQuery()
+const translateGeoLoc = async (agg) => {
+    logger.debug('translateGeoLoc '+util.inspect(agg, false, null, true));
+    let latitude = agg.lat;
+    let longitude = agg.long;
+    if(agg.zipcode) {
+        logger.debug('Doing a geolookup of zip')
+        // Do a google lookup to get a lat,long of a zip
+        const options = {
+            proider: 'google',
+            apiKey: config.googleMapsAPIKey
+        };
+        const geocoder = NodeGeocoder(options);
+        const googleResponse = await geocoder.geocode({
+            zipcode: agg.zipcode
+        });
+        if(googleResponse && googleResponse.length > 0) {
+            logger.debug('googleResponse '+util.inspect(googleResponse, false, null, true));
+            latitude = googleResponse[0].latitude;
+            longitude = googleResponse[0].longitude;            
+        }
+    }
+    let query = esb.geoDistanceQuery()
         .field(agg.field)
         .distance(agg.range)
-        .geoPoint(esb.geoPoint().lat(agg.lat).lon(agg.long));
+        .geoPoint(esb.geoPoint().lat(latitude).lon(longitude));
     return query;
 }
 

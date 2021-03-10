@@ -16,6 +16,7 @@ export const loadConfig = () => {
     config.outboundEmail= process.env.SMTP_OUTBOUND_EMAIL || 'no-reply@yourdomain.com';
     config.webUrl= process.env.WEB_URL || 'http://localhost:3001';  
     config.defaultNotifyIntervalInDays = process.env.DEFAULT_NOTIFCATION_INTERVAL_DAYS  || 7;
+    config.googleMapsAPIKey = process.env.GOOGLE_MAPS_API_KEY || 'changeme';
 }
 
 export default config;
