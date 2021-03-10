@@ -74,16 +74,15 @@ const translateGeoLoc = async (agg) => {
     let latitude = agg.lat;
     let longitude = agg.long;
     if(agg.zipcode) {
-        logger.debug('Doing a geolookup of zip')
+        logger.debug('Doing a geolookup of zip');
         // Do a google lookup to get a lat,long of a zip
         const options = {
-            proider: 'google',
-            apiKey: config.googleMapsAPIKey
+            provider: 'openstreetmap'
+            //proider: 'google',
+            //apiKey: config.googleMapsAPIKey
         };
         const geocoder = NodeGeocoder(options);
-        const googleResponse = await geocoder.geocode({
-            zipcode: agg.zipcode
-        });
+        const googleResponse = await geocoder.geocode(agg.zipcode);
         if(googleResponse && googleResponse.length > 0) {
             logger.debug('googleResponse '+util.inspect(googleResponse, false, null, true));
             latitude = googleResponse[0].latitude;
