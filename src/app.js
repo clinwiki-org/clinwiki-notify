@@ -21,35 +21,41 @@ export const app = () => {
 
             if(allowedToNotify(user)) {
 
-                let searchResults = [];
-                logger.info('Running saved searches for user '+user.email+' id:'+user.id);
-                const savedSearchesRS = await db.query(SAVED_SEARCHES_QUERY, [user.id]);
-                const savedSearches = savedSearchesRS.rows;
-                logger.info('Found '+savedSearches.length+' subscribed searches for user '+user.email+' id:'+user.id);
+                try {
+                    let searchResults = [];
+                    logger.info('Running saved searches for user '+user.email+' id:'+user.id);
+                    const savedSearchesRS = await db.query(SAVED_SEARCHES_QUERY, [user.id]);
+                    const savedSearches = savedSearchesRS.rows;
+                    logger.info('Found '+savedSearches.length+' subscribed searches for user '+user.email+' id:'+user.id);
 
-                for(let k=0;k<savedSearches.length;k++) {
-                    const savedSearch = savedSearches[k];
+                    for(let k=0;k<savedSearches.length;k++) {
+                        const savedSearch = savedSearches[k];
 
-                    logger.info('Running search for saved search '+savedSearch.id);
-                    const criteriaResults = await db.query(HASH_QUERY,[savedSearch.short_link_id]);    
-                    const criteria = criteriaResults.rows[0].long;
+                        logger.info('Running search for saved search '+savedSearch.id);
+                        const criteriaResults = await db.query(HASH_QUERY,[savedSearch.short_link_id]);    
+                        const criteria = criteriaResults.rows[0].long;
 
-                    logger.info('Translating search criteria '+util.inspect(criteria,false,null,true));
-                    const translated = await translate(criteria,user.search_last_notification);
-                    logger.info('Translated search criteria to '+util.inspect(translated, false, null, true ));
+                        logger.info('Translating search criteria '+util.inspect(criteria,false,null,true));
+                        const translated = await translate(criteria,user.search_last_notification);
+                        logger.info('Translated search criteria to '+util.inspect(translated, false, null, true ));
 
-                    let esResults = await elastic.query(translated);
-                    const results =  esResults.body.hits;
-                    logger.info('Found '+results.total+' matches for search '
-                        +savedSearch.name_label+( '('+savedSearch.id+')'));
+                        let esResults = await elastic.query(translated);
+                        const results =  esResults.body.hits;
+                        logger.info('Found '+results.total+' matches for search '
+                            +savedSearch.name_label+( '('+savedSearch.id+')'));
 
-                    if(results.length !== 0) { 
-                        searchResults.push({savedSearch,total:results.total});
+                        if(results.length !== 0) { 
+                            searchResults.push({savedSearch,total:results.total});
+                        }
                     }
+                    //console.log(util.inspect(searchResults, false, null, true /* enable colors */))
+                    broadcast.mailResults(user.email,searchResults.slice());
+                    let rs = await db.query('UPDATE USERS SET SEARCH_LAST_NOTIFICATION=$1 WHERE ID=$2 ',[new Date(),user.id]);
                 }
-                //console.log(util.inspect(searchResults, false, null, true /* enable colors */))
-                broadcast.mailResults(user.email,searchResults.slice());
-                let rs = await db.query('UPDATE USERS SET SEARCH_LAST_NOTIFICATION=$1 WHERE ID=$2 ',[new Date(),user.id]);
+                catch(err) {
+                    logger.error(err);
+                    logger.error('Skipping user '+user.id);
+                }
             }
         }
         logger.info('Job Finished.')
