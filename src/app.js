@@ -72,8 +72,10 @@ const allowedToNotify = (user) => {
     const interval = user.search_notification_frequency ? 
         user.search_notification_frequency : config.defaultNotifyIntervalInDays;
     let targetDate = new Date(user.search_last_notification);
-    targetDate.setDate( targetDate.getDate() + interval);
+    targetDate.setDate( targetDate.getDate() + parseInt(interval,10));
     let now = new Date();
+    
+    logger.debug('Next Notification Due: '+targetDate+ ' now: '+now);
     if(targetDate.getTime() < now.getTime()) {
         return true;
     }
