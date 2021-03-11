@@ -10,7 +10,9 @@ export function mailResults(email,results) {
         if(results.length === 0) {
             return;
         }
-        let templateFunction = pug.compileFile(path.join(__dirname, './views/savedSearchEmail.pug'));
+        let templateFunction = config.nodeEnv === 'production' ?
+          pug.compileFile(path.join(__dirname, '../src/views/savedSearchEmail.pug')) :
+          pug.compileFile(path.join(__dirname, './views/savedSearchEmail.pug'));
         let body = templateFunction({results});
         sendEmail(
           email,
