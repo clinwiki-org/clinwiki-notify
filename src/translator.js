@@ -2,15 +2,16 @@ import logger from './util/logger';
 import config from '../config';
 const util = require('util');
 const esb = require('elastic-builder');
-const NodeGeocoder = require('node-geocoder');
+const zg = require('zip2geo');
 
 const translate = async (json,lastDate) => {
-    const criteria = await JSON.parse(json);
+    logger.debug('translate.lastDate '+lastDate);
+    const criteria = await JSON.parse(json);    
 
     let boolQuery = esb.boolQuery();
     
-    translateAggFilters(criteria.agg_filters,boolQuery);
-    translateAggFilters(criteria.crowd_agg_filters,boolQuery);
+    await translateAggFilters(criteria.agg_filters,boolQuery);
+    await translateAggFilters(criteria.crowd_agg_filters,boolQuery);
 
     if(criteria.q.key === 'AND' && criteria.q.children) {
         criteria.q.children.forEach( child => {
@@ -24,7 +25,8 @@ const translate = async (json,lastDate) => {
     }
 
     if(lastDate) {
-        const dateString = lastDate.getMonth()+'/'+lastDate.getDate()+'/'+lastDate.getFullYear();
+        const dateString = (lastDate.getMonth()+1)+'/'+lastDate.getDate()+'/'+lastDate.getFullYear();
+        logger.debug('indexed_at dateString: '+dateString);
         boolQuery.must(esb.simpleQueryStringQuery('indexed_at:{'+dateString+' TO *}'));
     }
     let requestBody = esb.requestBodySearch().query( boolQuery ).from(0).size(config.elasticMaxResults);
@@ -32,67 +34,69 @@ const translate = async (json,lastDate) => {
     return requestBody.toJSON();
 }
 
-const translateAggFilters = (aggFilters,boolQuery) => {
+const translateAggFilters = async (aggFilters,boolQuery) => {
     if(aggFilters) {
-        aggFilters.forEach( agg => {
-            boolQuery.must(translateFilterTerm(agg));
-        });
+        for(let i=0;i<aggFilters.length;i++) {
+            let agg = aggFilters[i];
+            let tf = await translateFilterTerm(agg);
+            logger.debug('tf agg '+util.inspect(agg, false, null, true)+' returned '+util.inspect(tf, false, null, true));
+            await boolQuery.must(tf);
+        }
     }
 };
 
-const translateFilterTerm = (agg) => {
+const translateFilterTerm = async (agg) => {
     if(agg.gte || agg.lte || agg.gt || agg.lt) {        
         // This is a range term
-        return translateRangeTerm(agg);
+        return await translateRangeTerm(agg);
     }
     if(agg.lat || agg.long || agg.radius || agg.zipcode) {
-        return translateGeoLoc(agg);
+        return await translateGeoLoc(agg);
     }
     return translateValueTerms(agg);
 };
 
-const translateRangeTerm = (agg) => {
+const translateRangeTerm = async (agg) => {
     logger.debug('translateRangeTerm '+agg);
-    let query = esb.rangeQuery(agg.field);
+    let query = await esb.rangeQuery(agg.field);
     if(agg.lte) {
-        query = query.lte(agg.lte);
+        query = await query.lte(agg.lte);
     }
     if(agg.gte) {
-        query = query.gte(agg.gte);
+        query = await query.gte(agg.gte);
     }
     return query;
 };
 
 const translateValueTerms = (agg) => {
     let list = [];
-    agg.values.forEach( val => list.push(esb.termQuery(agg.field,val)) );
-    return esb.boolQuery().should(list);
+    agg.values.forEach( val => {
+        let valQuery = esb.termQuery(agg.field,val);
+        logger.debug('valQuery '+util.inspect(valQuery, false, null, true));
+        list.push(valQuery); 
+    });
+    let bq = esb.boolQuery().should(list);
+    logger.debug('translateValueTerms bq '+util.inspect(bq, false, null, true));
+    return bq;
 }
 
 const translateGeoLoc = async (agg) => {
     logger.debug('translateGeoLoc '+util.inspect(agg, false, null, true));
     let latitude = agg.lat;
     let longitude = agg.long;
+    let field = agg.field;
     if(agg.zipcode) {
         logger.debug('Doing a geolookup of zip');
-        // Do a google lookup to get a lat,long of a zip
-        const options = {
-            provider: 'openstreetmap'
-            //proider: 'google',
-            //apiKey: config.googleMapsAPIKey
-        };
-        const geocoder = NodeGeocoder(options);
-        const googleResponse = await geocoder.geocode(agg.zipcode);
-        if(googleResponse && googleResponse.length > 0) {
-            logger.debug('googleResponse '+util.inspect(googleResponse, false, null, true));
-            latitude = googleResponse[0].latitude;
-            longitude = googleResponse[0].longitude;            
-        }
+        const loc = zg.zip2geo('27540');
+        latitude = loc.latitude;
+        longitude = loc.longitude;
+        field = 'locations'; // This is a hack because of bad data that had 'location' as the field.
     }
-    let query = esb.geoDistanceQuery()
-        .field(agg.field)
-        .distance(agg.range)
+    let query = await esb.geoDistanceQuery()
+        .field(field)
+        .distance(agg.radius+'km')
         .geoPoint(esb.geoPoint().lat(latitude).lon(longitude));
+    logger.debug('translateGeoLoc query '+util.inspect(query, false, null, true));
     return query;
 }
 
