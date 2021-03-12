@@ -23,7 +23,7 @@ export const app = () => {
 
                 try {
                     let searchResults = [];
-                    logger.info('Running saved searches for user '+user.email+' id:'+user.id);
+                    logger.info('Running saved searches for user '+user.email+' id:'+user.id+' search_last_notification:'+user.search_last_notification);
                     const savedSearchesRS = await db.query(SAVED_SEARCHES_QUERY, [user.id]);
                     const savedSearches = savedSearchesRS.rows;
                     logger.info('Found '+savedSearches.length+' subscribed searches for user '+user.email+' id:'+user.id);
