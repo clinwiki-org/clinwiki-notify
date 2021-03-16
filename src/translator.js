@@ -25,9 +25,8 @@ const translate = async (json,lastDate) => {
     }
 
     if(lastDate) {
-        const dateString = (lastDate.getMonth()+1)+'/'+lastDate.getDate()+'/'+lastDate.getFullYear();
-        logger.debug('indexed_at dateString: '+dateString);
-        boolQuery.must(esb.simpleQueryStringQuery('indexed_at:{'+dateString+' TO *}'));
+        logger.debug('indexed_at: '+lastDate+' '+lastDate.getTime());
+        boolQuery.must(esb.rangeQuery('indexed_at').gte(lastDate.getTime()));
     }
     let requestBody = esb.requestBodySearch().query( boolQuery ).from(0).size(config.elasticMaxResults);
 
