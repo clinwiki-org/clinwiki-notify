@@ -10,8 +10,8 @@ const translate = async (json,lastDate) => {
 
     let boolQuery = esb.boolQuery();
     
-    await translateAggFilters(criteria.agg_filters,boolQuery);
-    await translateAggFilters(criteria.crowd_agg_filters,boolQuery);
+    await translateAggFilters(criteria.agg_filters,boolQuery,false);
+    await translateAggFilters(criteria.crowd_agg_filters,boolQuery,true);
 
     if(criteria.q.key === 'AND' && criteria.q.children) {
         criteria.q.children.forEach( child => {
@@ -34,31 +34,30 @@ const translate = async (json,lastDate) => {
     return requestBody.toJSON();
 }
 
-const translateAggFilters = async (aggFilters,boolQuery) => {
+const translateAggFilters = async (aggFilters,boolQuery,isCrowdAgg) => {
     if(aggFilters) {
         for(let i=0;i<aggFilters.length;i++) {
             let agg = aggFilters[i];
-            let tf = await translateFilterTerm(agg);
-            logger.debug('tf agg '+util.inspect(agg, false, null, true)+' returned '+util.inspect(tf, false, null, true));
+            let tf = await translateFilterTerm(agg,isCrowdAgg);
             await boolQuery.must(tf);
         }
     }
 };
 
-const translateFilterTerm = async (agg) => {
+const translateFilterTerm = async (agg,isCrowdAgg) => {
     if(agg.gte || agg.lte || agg.gt || agg.lt) {        
         // This is a range term
-        return await translateRangeTerm(agg);
+        return await translateRangeTerm(agg,isCrowdAgg);
     }
     if(agg.lat || agg.long || agg.radius || agg.zipcode) {
-        return await translateGeoLoc(agg);
+        return await translateGeoLoc(agg,isCrowdAgg);
     }
-    return translateValueTerms(agg);
+    return translateValueTerms(agg,isCrowdAgg);
 };
 
-const translateRangeTerm = async (agg) => {
+const translateRangeTerm = async (agg,isCrowdAgg) => {
     logger.debug('translateRangeTerm '+agg);
-    let query = await esb.rangeQuery(agg.field);
+    let query = await esb.rangeQuery(getFieldName(agg,isCrowdAgg));
     if(agg.lte) {
         query = await query.lte(agg.lte);
     }
@@ -68,10 +67,10 @@ const translateRangeTerm = async (agg) => {
     return query;
 };
 
-const translateValueTerms = (agg) => {
+const translateValueTerms = (agg,isCrowdAgg) => {
     let list = [];
     agg.values.forEach( val => {
-        let valQuery = esb.termQuery(agg.field,val);
+        let valQuery = esb.termQuery(getFieldName(agg,isCrowdAgg),val);
         logger.debug('valQuery '+util.inspect(valQuery, false, null, true));
         list.push(valQuery); 
     });
@@ -80,7 +79,7 @@ const translateValueTerms = (agg) => {
     return bq;
 }
 
-const translateGeoLoc = async (agg) => {
+const translateGeoLoc = async (agg,isCrowdAgg) => {
     logger.debug('translateGeoLoc '+util.inspect(agg, false, null, true));
     let latitude = agg.lat;
     let longitude = agg.long;
@@ -90,7 +89,7 @@ const translateGeoLoc = async (agg) => {
         const loc = zg.zip2geo('27540');
         latitude = loc.latitude;
         longitude = loc.longitude;
-        field = 'locations'; // This is a hack because of bad data that had 'location' as the field.
+        field = isCrowdAgg ? 'fm_locations' : 'locations'; // This is a hack because of bad data that had 'location' as the field.
     }
     let query = await esb.geoDistanceQuery()
         .field(field)
@@ -100,4 +99,7 @@ const translateGeoLoc = async (agg) => {
     return query;
 }
 
+const getFieldName = (agg,isCrowdAgg) => {
+    return isCrowdAgg ? 'fm_'+agg.field : agg.field;
+}
 export default translate;
