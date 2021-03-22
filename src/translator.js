@@ -55,7 +55,7 @@ const translateFilterTerm = async (agg,isCrowdAgg) => {
 };
 
 const translateRangeTerm = async (agg,isCrowdAgg) => {
-    logger.debug('translateRangeTerm '+agg);
+    //logger.debug('translateRangeTerm '+agg);
     let query = await esb.rangeQuery(getFieldName(agg,isCrowdAgg));
     if(agg.lte) {
         query = await query.lte(agg.lte);
@@ -70,21 +70,21 @@ const translateValueTerms = (agg,isCrowdAgg) => {
     let list = [];
     agg.values.forEach( val => {
         let valQuery = esb.termQuery(getFieldName(agg,isCrowdAgg),val);
-        logger.debug('valQuery '+util.inspect(valQuery, false, null, true));
+        //logger.debug('valQuery '+util.inspect(valQuery, false, null, true));
         list.push(valQuery); 
     });
     let bq = esb.boolQuery().should(list);
-    logger.debug('translateValueTerms bq '+util.inspect(bq, false, null, true));
+    //logger.debug('translateValueTerms bq '+util.inspect(bq, false, null, true));
     return bq;
 }
 
 const translateGeoLoc = async (agg,isCrowdAgg) => {
-    logger.debug('translateGeoLoc '+util.inspect(agg, false, null, true));
+    //logger.debug('translateGeoLoc '+util.inspect(agg, false, null, true));
     let latitude = agg.lat;
     let longitude = agg.long;
     let field = agg.field;
     if(agg.zipcode) {
-        logger.debug('Doing a geolookup of zip');
+        //logger.debug('Doing a geolookup of zip');
         const loc = zg.zip2geo('27540');
         latitude = loc.latitude;
         longitude = loc.longitude;
@@ -94,7 +94,7 @@ const translateGeoLoc = async (agg,isCrowdAgg) => {
         .field(field)
         .distance(agg.radius+'km')
         .geoPoint(esb.geoPoint().lat(latitude).lon(longitude));
-    logger.debug('translateGeoLoc query '+util.inspect(query, false, null, true));
+    //logger.debug('translateGeoLoc query '+util.inspect(query, false, null, true));
     return query;
 }
 

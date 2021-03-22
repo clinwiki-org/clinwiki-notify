@@ -7,7 +7,7 @@ export const query = async (body) => {
     try {
         const connection = getConnection();
         const payload = {
-            index: config.elasticIndex,
+            index: getIndex(),
             body
         };
         //console.log(util.inspect(payload, false, null, true /* enable colors */))
@@ -23,15 +23,28 @@ export const query = async (body) => {
     }
 };
 
+const getIndex = () => {
+    if(config.nodeEnv === 'production') {        
+        return config.searchboxIndex;
+    }
+    return config.elasticIndex;
+}
+
 const getConnection = () => {
-    const client = new Client({
+    if(config.nodeEnv === 'production') {
+        const url = new URL(config.searchboxUrl);
+        return  new Client({
+            node: config.searchboxUrl,
+        });
+    
+    }
+    return  new Client({
         node: config.elasticsearchHost,
         auth: {
             username: config.elasticsearchUsername,
             password: config.elasticsearchPassword
         }
     });
-    return client;
 };
 
 export const newQuery = async (body) => {
