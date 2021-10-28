@@ -44,7 +44,7 @@ export const app = () => {
                         logger.info('Found '+results.total+' matches for search '
                             +savedSearch.name_label+( '('+savedSearch.id+')'));
 
-                        if(results.length !== 0) { 
+                        if(results.total !== 0) { 
                             searchResults.push({savedSearch,total:results.total});
                         }
                     }
