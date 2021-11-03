@@ -9,41 +9,50 @@ const translate = async (json,lastDate) => {
     const criteria = await JSON.parse(json);    
 
     let boolQuery = esb.boolQuery();
-    
-    await translateAggFilters(criteria.agg_filters,boolQuery,false);
-    await translateAggFilters(criteria.crowd_agg_filters,boolQuery,true);
+    boolQuery.must(esb.simpleQueryStringQuery('*'));
+    await translateAggFilters(criteria.aggFilters,boolQuery,false);
+    await translateAggFilters(criteria.crowdAggFilters,boolQuery,true);
 
     if(criteria.q.key === 'AND' && criteria.q.children) {
         criteria.q.children.forEach( child => {
-            boolQuery.must(esb.simpleQueryStringQuery('('+child.key+')') );
+            boolQuery.must(
+				esb.simpleQueryStringQuery('*' + child.key + '*').analyzeWildcard(true)
+			);
         })
     }
     if(criteria.q.key === 'OR' && criteria.q.children) {
         criteria.q.children.forEach( child => {
-            boolQuery.should(esb.simpleQueryStringQuery('('+child.key+')') );
+            boolQuery.should(
+                esb.simpleQueryStringQuery('*' + child.key + '*').analyzeWildcard(true)
+            );
         })
     }
 
+
     if(lastDate) {
-        logger.debug('indexed_at: '+lastDate+' '+lastDate.getTime());
-        boolQuery.must(esb.rangeQuery('indexed_at').gte(lastDate.getTime()));
+        const dateString = (`${lastDate.getFullYear()}-${(lastDate.getMonth()+1)}-${lastDate.getDate()}`);
+        logger.debug('indexed_at dateString: '+dateString);
+        boolQuery.must(esb.rangeQuery('indexed_at').gte(dateString));
+
     }
     let requestBody = esb.requestBodySearch().query( boolQuery ).from(0).size(config.elasticMaxResults);
 
     return requestBody.toJSON();
 }
 
-const translateAggFilters = async (aggFilters,boolQuery,isCrowdAgg) => {
-    if(aggFilters) {
-        for(let i=0;i<aggFilters.length;i++) {
+const translateAggFilters = async (aggFilters, boolQuery, isCrowdAgg, currentAgg) => {
+    if (aggFilters) {
+        for (let i = 0; i < aggFilters.length; i++) {
             let agg = aggFilters[i];
-            let tf = await translateFilterTerm(agg,isCrowdAgg);
-            await boolQuery.must(tf);
+            if (isCrowdAgg ? currentAgg !== `fm_${agg.field}` : currentAgg !== agg.field) {
+                let tf = await translateFilterTerm(agg, isCrowdAgg, currentAgg);
+                await boolQuery.must(tf);
+            }
         }
     }
 };
 
-const translateFilterTerm = async (agg,isCrowdAgg) => {
+const translateFilterTerm = async (agg,isCrowdAgg, currentAgg) => {
     if(agg.gte || agg.lte || agg.gt || agg.lt) {        
         // This is a range term
         return await translateRangeTerm(agg,isCrowdAgg);
@@ -51,7 +60,9 @@ const translateFilterTerm = async (agg,isCrowdAgg) => {
     if(agg.lat || agg.long || agg.radius || agg.zipcode) {
         return await translateGeoLoc(agg,isCrowdAgg);
     }
-    return translateValueTerms(agg,isCrowdAgg);
+    if ( isCrowdAgg ? currentAgg !== `fm_${agg.field}`: currentAgg !==  agg.field){
+        return translateValueTerms(agg,isCrowdAgg, currentAgg);
+    }
 };
 
 const translateRangeTerm = async (agg,isCrowdAgg) => {
@@ -79,20 +90,20 @@ const translateValueTerms = (agg,isCrowdAgg) => {
 }
 
 const translateGeoLoc = async (agg,isCrowdAgg) => {
-    //logger.debug('translateGeoLoc '+util.inspect(agg, false, null, true));
     let latitude = agg.lat;
     let longitude = agg.long;
     let field = agg.field;
+    // console.log('in TRANSLATE GEO', agg)
     if(agg.zipcode) {
-        //logger.debug('Doing a geolookup of zip');
-        const loc = zg.zip2geo('27540');
+        const loc = await zg.zip2geo(agg.zipcode);
+        console.log('ZIP CODE TO LAT', loc)
         latitude = loc.latitude;
         longitude = loc.longitude;
         field = isCrowdAgg ? 'fm_locations' : 'locations'; // This is a hack because of bad data that had 'location' as the field.
     }
     let query = await esb.geoDistanceQuery()
         .field(field)
-        .distance(agg.radius+'km')
+        .distance(agg.radius+'mi')
         .geoPoint(esb.geoPoint().lat(latitude).lon(longitude));
     //logger.debug('translateGeoLoc query '+util.inspect(query, false, null, true));
     return query;
