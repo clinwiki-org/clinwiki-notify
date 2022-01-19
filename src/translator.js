@@ -53,6 +53,9 @@ const translateAggFilters = async (aggFilters, boolQuery, isCrowdAgg, currentAgg
 };
 
 const translateFilterTerm = async (agg,isCrowdAgg, currentAgg) => {
+    if(agg.includeMissingFields){
+        return await translateAllowMissing(agg, isCrowdAgg)
+    }
     if(agg.gte || agg.lte || agg.gt || agg.lt) {        
         // This is a range term
         return await translateRangeTerm(agg,isCrowdAgg);
@@ -74,6 +77,11 @@ const translateRangeTerm = async (agg,isCrowdAgg) => {
     if(agg.gte) {
         query = await query.gte(agg.gte);
     }
+    return query;
+};
+
+const translateAllowMissing = async (agg,isCrowdAgg) => {
+    let query = await esb.boolQuery().filter(esb.recipes.missingQuery(isCrowdAgg? (`fm_${agg.field}`):agg.field));
     return query;
 };
 
